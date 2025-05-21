@@ -131,19 +131,28 @@
         <h1>📊 Análise de Clientes</h1>
         
         <div class="botoes">
-            <button onclick="carregarImagem('clusterizacao')">🔍 Clusterização</button>
+            <button onclick="carregarImagem('cluster')">🔍 Clusterização</button>
             <button onclick="carregarImagem('clv')">💰 CLV</button>
+	    <button onclick="carregarImagem('clv campanha')">📊 CLV por Campanha</button> 
             <button onclick="carregarImagem('conjoint')">📈 Conjoint</button>
-            <button onclick="carregarImagem('previsao')">🔮 Previsão</button>
-            <button onclick="carregarCSV()">📂 Carregar Dados</button>
+            <button onclick="carregarImagem('regressao')">🔮 Previsão</button>
+            <button onclick="carregarCSV('campanhas')">📂 Campanhas</button>
+	    <button onclick="carregarCSV('clientes')">📂 Clientes</button>
+            <button onclick="carregarCSV('transacoes')>📂 Transações</button>
         </div>
 
         <div class="imagem-container" id="imagemContainer">
             <div class="status">Selecione uma visualização acima</div>
         </div>
 
-        <div class="tabela-container" id="tabelaContainer">
-            <div class="status">Clique em "Carregar Dados" para ver as informações</div>
+        <div class="tabela-container" id="tabelaContainerCampanhas">
+            <div class="status">Clique em "Campanhas" para ver as informações</div>
+
+	<div class="tabela-container" id="tabelaConteinerClientes">
+	     <div class="status">Clique em "Clientes" para ver as informações</div>
+
+	<div class="tabela-container" id="tabelaContainerTransações">
+	     <div class="status">Clique em "Transações" para ver as informações</div>
         </div>
     </div>
 
