@@ -136,27 +136,17 @@
 	    <button onclick="carregarImagem('clv campanha')">📊 CLV por Campanha</button> 
             <button onclick="carregarImagem('conjoint')">📈 Conjoint</button>
             <button onclick="carregarImagem('regressao')">🔮 Previsão</button>
-            <button onclick="carregarCSV('campanhas')">📂 Campanhas</button>
 	    <button onclick="carregarCSV('clientes')">📂 Clientes</button>
-            <button onclick="carregarCSV('transacoes')>📂 Transações</button>
         </div>
 
         <div class="imagem-container" id="imagemContainer">
             <div class="status">Selecione uma visualização acima</div>
         </div>
 
-        <div class="tabela-container" id="tabelaContainerCampanhas">
-            <div class="status">Clique em "Campanhas" para ver as informações</div>
-	</div>
-
 	<div class="tabela-container" id="tabelaConteinerClientes">
 	     <div class="status">Clique em "Clientes" para ver as informações</div>
 	</div>
 
-	<div class="tabela-container" id="tabelaContainerTransacoes">
-	     <div class="status">Clique em "Transações" para ver as informações</div>
-        </div>
-	    
     </div>
 
  <script>
@@ -164,40 +154,18 @@
         const BASE_URL = window.location.origin;
         
         async function carregarCSV() {
-            const container = document.getElementById('tabelaContainerCampanhas');
+            const container = document.getElementById('tabelaContainer');
             try {
-                container.innerHTML = '<div class="status">Campanhas</div>';
+                container.innerHTML = '<div class="status">Clientes</div>';
                 
                 // URL absoluta com cache busting
-                const csvUrl = `${BASE_URL}/campanhas.csv?t=${Date.now()}`;
+                const csvUrl = `${BASE_URL}/clientes.csv?t=${Date.now()}`;
                 const response = await fetch(csvUrl);
                 
                 if (!response.ok) {
                     throw new Error(`Erro ${response.status}: ${response.statusText}`);
                 }
 		    
-             const container = document.getElementById('tabelaContainerClientes');
-	     try {
-		  container.innerHTMK = '<div class="status">Clientes</div>';
-
-	        // URL absoluta com cache busting 
-		const csvUrl = `${BASE_URL}/clientes.csv?t=${Date.now()}`;
-                
-                if (!response.ok){
-                   throw new Error(`Erro $(response.status}: ${response.statusText}`);
-		}
-
-       const container = document.getElementById('tabelaContainerTransacoes');
-	     try {
-		  container.innerHTMK = '<div class="status">Transações</div>';
-
-	        // URL absoluta com cache busting 
-		const csvUrl = `${BASE_URL}/transacoes.csv?t=${Date.now()}`;
-                
-                if (!response.ok){
-                   throw new Error(`Erro $(response.status}: ${response.statusText}`);
-		}
-
                 // Decodificação segura
                 const buffer = await response.arrayBuffer();
                 const decoder = new TextDecoder('utf-8');
@@ -209,9 +177,9 @@
 
                 const headers = linhas[0].split(',').map(h => h.trim());
                 const expectedHeaders = [
-                    'cliente_id', 'idade', 'renda_anual', 'frequencia_compras',
-                    'valor_medio_compra', 'preferencia_frete_gratis',
-                    'satisfacao_qualidade', 'total_gasto'
+                    'cliente_id', 'idade', 'renda_mensal', 'cidade',
+                    'tipo_cliente', 'ultima_compra',
+                    'frequencia_compras', 'total_gasto'
                 ];
 
                 if (!arraysIguais(headers, expectedHeaders)) {
@@ -263,12 +231,21 @@
                 const formatadores = {
                     'cliente_id': v => `#${v.padStart(4, '0')}`,
                     'idade': v => `${v} anos`,
-                    'renda_anual': v => new Intl.NumberFormat('pt-BR', {
+                    'renda_mensal': v => new Intl.NumberFormat('pt-BR', {
                         style: 'currency',
                         currency: 'BRL'
                     }).format(v),
-                    'satisfacao_qualidade': v => `${parseFloat(v).toFixed(1)} ⭐`,
-                    'preferencia_frete_gratis': v => v === '1' ? '✅ Sim' : '❌ Não'
+                    'cidade': v => `${v}`,
+                    'tipo_cliente': v => `${v}`,
+                    'ultima_compra': v => new Intl.NumberFormat('pt-BR', {
+			style: 'currency',
+			currency: 'BRL'
+		    }).format(v),
+                    'frequencia_compras': v => `${v} vezes`,
+		    'total_gasto': v => new Intl.NumberFormat('pt-BR', {
+			style: 'currency',
+			currency: 'BRL'
+		    }).format(v),
                 };
                 return formatadores[cabecalho]?.(valor) || valor;
             } catch (error) {
