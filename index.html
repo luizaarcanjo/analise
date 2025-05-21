@@ -164,17 +164,39 @@
         const BASE_URL = window.location.origin;
         
         async function carregarCSV() {
-            const container = document.getElementById('tabelaContainer');
+            const container = document.getElementById('tabelaContainerCampanhas');
             try {
-                container.innerHTML = '<div class="status">Carregando dados...</div>';
+                container.innerHTML = '<div class="status">Campanhas</div>';
                 
                 // URL absoluta com cache busting
-                const csvUrl = `${BASE_URL}/aula05-dados_clientes.csv?t=${Date.now()}`;
+                const csvUrl = `${BASE_URL}/campanhas.csv?t=${Date.now()}`;
                 const response = await fetch(csvUrl);
                 
                 if (!response.ok) {
                     throw new Error(`Erro ${response.status}: ${response.statusText}`);
                 }
+		    
+             const container = document.getElementById('tabelaContainerClientes');
+	     try {
+		  container.innerHTMK = '<div class="status">Clientes</div>';
+
+	        // URL absoluta com cache busting 
+		const csvUrl = `${BASE_URL}/clientes.csv?t=${Date.now()}`;
+                
+                if (!response.ok){
+                   throw new Error(`Erro $(response.status}: ${response.statusText}`);
+		}
+
+       const container = document.getElementById('tabelaContainerTransacoes');
+	     try {
+		  container.innerHTMK = '<div class="status">Transações</div>';
+
+	        // URL absoluta com cache busting 
+		const csvUrl = `${BASE_URL}/transacoes.csv?t=${Date.now()}`;
+                
+                if (!response.ok){
+                   throw new Error(`Erro $(response.status}: ${response.statusText}`);
+		}
 
                 // Decodificação segura
                 const buffer = await response.arrayBuffer();
