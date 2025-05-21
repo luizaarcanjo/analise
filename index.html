@@ -153,132 +153,192 @@
 	     <div class="status">Clique em "Clientes" para ver as informações</div>
 	</div>
 
-	<div class="tabela-container" id="tabelaContainerTransações">
+	<div class="tabela-container" id="tabelaContainerTransacoes">
 	     <div class="status">Clique em "Transações" para ver as informações</div>
         </div>
+	    
     </div>
 
-    <script>
-        // Configuração de caminhos absolutos
-        const BASE_URL = window.location.origin;
-        
-        async function carregarCSV() {
-            const container = document.getElementById('tabelaContainer');
-            try {
-                container.innerHTML = '<div class="status">Carregando dados...</div>';
-                
-                // URL absoluta com cache busting
-                const csvUrl = `${BASE_URL}/aula05-dados_clientes.csv?t=${Date.now()}`;
-                const response = await fetch(csvUrl);
-                
-                if (!response.ok) {
-                    throw new Error(`Erro ${response.status}: ${response.statusText}`);
-                }
+<script>
+        // Configuração de caminhos absolutos
+        const BASE_URL = window.location.origin;
+        
+        // Mapeamento de cabeçalhos esperados para cada CSV
+        const expectedHeaders = {
+            'campanhas': ['campanha_id', 'nome_campanha', 'custo_campanha', 'alcance', 'conversao'],
+            'clientes': ['cliente_id', 'idade', 'renda_mensal', 'cidade', 'tipo_cliente', 'ultima_compra', 'frequencia_compras', 'total_gasto'],
+            'transacoes': ['campanha_id', 'cliente_id', 'data_compra', 'valor_compra', 'meio_pagamento', 'campanha']
+        };
 
-                // Decodificação segura
-                const buffer = await response.arrayBuffer();
-                const decoder = new TextDecoder('utf-8');
-                const csvData = decoder.decode(buffer).replace(/^\uFEFF/, '');
+        async function carregarCSV(tipo) {
+            // Oculta todos os contêineres de tabela e mostra apenas o ativo
+            document.querySelectorAll('.tabela-container').forEach(container => {
+                container.classList.remove('active');
+            });
+            document.getElementById('imagemContainer').style.display = 'none';
 
-                // Processamento do CSV
-                const linhas = csvData.split(/\r?\n/).filter(line => line.trim());
-                if (linhas.length < 2) throw new Error('CSV inválido');
+            const containerId = `tabelaContainer${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`;
+            const container = document.getElementById(containerId);
+            container.classList.add('active'); // Ativa a exibição do contêiner correto
+            container.innerHTML = '<div class="status">Carregando dados...</div>';
 
-                const headers = linhas[0].split(',').map(h => h.trim());
-                const expectedHeaders = [
-                    'cliente_id', 'idade', 'renda_anual', 'frequencia_compras',
-                    'valor_medio_compra', 'preferencia_frete_gratis',
-                    'satisfacao_qualidade', 'total_gasto'
-                ];
+            try {
+                const csvUrl = `${BASE_URL}/${tipo}.csv?t=${Date.now()}`;
+                const response = await fetch(csvUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`Erro ${response.status}: ${response.statusText}`);
+                }
 
-                if (!arraysIguais(headers, expectedHeaders)) {
-                    throw new Error('Cabeçalhos do CSV não correspondem');
-                }
+                const buffer = await response.arrayBuffer();
+                const decoder = new TextDecoder('utf-8');
+                const csvData = decoder.decode(buffer).replace(/^\uFEFF/, '');
 
-                // Construção da tabela
-                const table = document.createElement('table');
-                
-                // Cabeçalho
-                const thead = table.createTHead();
-                const headerRow = thead.insertRow();
-                headers.forEach(header => {
-                    const th = document.createElement('th');
-                    th.textContent = header;
-                    headerRow.appendChild(th);
-                });
+                const linhas = csvData.split(/\r?\n/).filter(line => line.trim());
+                if (linhas.length < 2) throw new Error('CSV inválido ou vazio.');
 
-                // Dados
-                const tbody = table.createTBody();
-                for (let i = 1; i < linhas.length; i++) {
-                    const cells = linhas[i].split(',').map(c => c.trim());
-                    if (cells.length !== headers.length) continue;
+                const headers = linhas[0].split(',').map(h => h.trim());
+                const expected = expectedHeaders[tipo];
 
-                    const row = tbody.insertRow();
-                    cells.forEach((cell, index) => {
-                        const td = row.insertCell();
-                        td.innerHTML = formatarCelula(cell, headers[index]);
-                    });
-                }
+                if (!arraysIguais(headers, expected)) {
+                    throw new Error(`Cabeçalhos do CSV de ${tipo} não correspondem ao esperado.`);
+                }
 
-                container.innerHTML = '';
-                container.appendChild(table);
+                const table = document.createElement('table');
+                const thead = table.createTHead();
+                const headerRow = thead.insertRow();
+                headers.forEach(header => {
+                    const th = document.createElement('th');
+                    th.textContent = header;
+                    headerRow.appendChild(th);
+                });
 
-            } catch (error) {
-                console.error('Erro:', error);
-                container.innerHTML = `
-                    <div class="erro">
-                        <strong>Erro ao carregar dados:</strong> ${error.message}
-                        <br><br>
-                        <button onclick="location.reload()">↻ Tentar novamente</button>
-                    </div>
-                `;
-            }
-        }
+                const tbody = table.createTBody();
+                for (let i = 1; i < linhas.length; i++) {
+                    const cells = linhas[i].split(',').map(c => c.trim());
+                    if (cells.length !== headers.length) continue;
 
-        function formatarCelula(valor, cabecalho) {
-            try {
-                const formatadores = {
-                    'cliente_id': v => `#${v.padStart(4, '0')}`,
-                    'idade': v => `${v} anos`,
-                    'renda_anual': v => new Intl.NumberFormat('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL'
-                    }).format(v),
-                    'satisfacao_qualidade': v => `${parseFloat(v).toFixed(1)} ⭐`,
-                    'preferencia_frete_gratis': v => v === '1' ? '✅ Sim' : '❌ Não'
-                };
-                return formatadores[cabecalho]?.(valor) || valor;
-            } catch (error) {
-                return `<span style="color:red">${valor}</span>`;
-            }
-        }
+                    const row = tbody.insertRow();
+                    cells.forEach((cell, index) => {
+                        const td = row.insertCell();
+                        **td.innerHTML = formatarCelula(cell, headers[index], tipo); // Passa 'tipo'**
+                    });
+                }
 
-        function arraysIguais(a, b) {
-            return a.length === b.length && a.every((v, i) => v === b[i]);
-        }
+                container.innerHTML = '';
+                container.appendChild(table);
 
-		function carregarImagem(tipo) {
-			const container = document.getElementById('imagemContainer');
-			const imgUrl = `${tipo}.png?t=${Date.now()}`; // Usando caminho relativo
+            } catch (error) {
+                console.error('Erro:', error);
+                container.innerHTML = `
+                    <div class="erro">
+                        <strong>Erro ao carregar dados de ${tipo}:</strong> ${error.message}
+                        <br><br>
+                        <button onclick="location.reload()">↻ Tentar novamente</button>
+                    </div>
+                `;
+            }
+        }
 
-			container.innerHTML = `
-				<div class="status">Carregando ${tipo.replace(/_/g, ' ')}...</div>
-				<img src="${imgUrl}" 
-					 alt="${tipo}" 
-					 onload="this.previousElementSibling.remove()"
-					 onerror="handleImageError(this, '${tipo}')"
-					 style="max-width: 100%; display: block; margin: 0 auto;">
-			`;
-		}
+        // ÚNICA FUNÇÃO formatarCelula
+        function formatarCelula(valor, cabecalho, tipoCSV) {
+            try {
+                const defaultFormatter = (v) => v; // Fallback para valores sem formatter específico
 
-		function handleImageError(img, tipo) {
-			img.parentElement.innerHTML = `
-				<div class="erro">
-					❌ Falha ao carregar "${tipo}"<br>
-					<small>Verifique se o arquivo ${tipo}.png existe</small>
-				</div>
-			`;
-		}		
-    </script>
+                const formattersByCSV = {
+                    'campanhas': {
+                        'campanha_id': v => `#${v.padStart(3, '0')}`,
+                        'custo_campanha': v => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v),
+                        'alcance': v => `${new Intl.NumberFormat('pt-BR').format(v)} pessoas`,
+                        'conversao': v => `${parseFloat(v).toFixed(2)}%`,
+                    },
+                    'clientes': {
+                        'cliente_id': v => `#${v.padStart(4, '0')}`,
+                        'idade': v => `${v} anos`,
+                        'renda_mensal': v => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v),
+                        'ultima_compra': v => {
+                            const date = new Date(v);
+                            return isNaN(date) ? v : date.toLocaleDateString('pt-BR');
+                        },
+                        'frequencia_compras': v => `${v} vezes`,
+                        'total_gasto': v => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v),
+                    },
+                    'transacoes': {
+                        'campanha_id': v => `#${v.padStart(3, '0')}`, // padStart for 3 digits, consistent with campanhas
+                        'cliente_id': v => `#${v.padStart(4, '0')}`,
+                        'data_compra': v => {
+                            const date = new Date(v);
+                            return isNaN(date.getTime()) ? `<span style="color:red">Data Inválida</span>` : date.toLocaleDateString('pt-BR');
+                        },
+                        'valor_compra': v => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v),
+                        'meio_pagamento': v => {
+                            const opcoes = {
+                                'cartao': 'Cartão', // corrected to 'cartao' for consistency (lowercase)
+                                'boleto': 'Boleto',
+                                'pix': 'Pix'
+                            };
+                            return opcoes[v.toLowerCase()] || `<span style="color:red">${v}</span>`;
+                        },
+                        'campanha': v => { // this 'campanha' field seems to represent campaign *names* in transacoes, not just the ID.
+                            const opcoes = {
+                                'sem_campanha': 'Sem Campanha',
+                                'dia_pais': 'Dia dos Pais',
+                                'dia_maes': 'Dia das Mães',
+                                'volta_as_aulas': 'Volta às Aulas',
+                                'ano_novo': 'Ano Novo',
+                                'black_friday': 'Black Friday',
+                                'natal': 'Natal'
+                            };
+                            return opcoes[v.toLowerCase()] || `<span style="color:red">${v}</span>`;
+                        }
+                    }
+                };
+
+                // Get the specific formatters for the current CSV type
+                const specificFormatters = formattersByCSV[tipoCSV] || {};
+
+                // Return the specific formatter for the header, or the default formatter if not found.
+                return (specificFormatters[cabecalho] || defaultFormatter)(valor);
+
+            } catch (error) {
+                console.error(`Erro ao formatar célula para ${cabecalho} no CSV ${tipoCSV || 'desconhecido'}:`, error);
+                return `<span style="color:red">${valor}</span>`;
+            }
+        }
+
+        function arraysIguais(a, b) {
+            return a.length === b.length && a.every((v, i) => v === b[i]);
+        }
+
+        function carregarImagem(tipo) {
+            // Oculta todos os contêineres de tabela
+            document.querySelectorAll('.tabela-container').forEach(container => {
+                container.classList.remove('active');
+            });
+            document.getElementById('imagemContainer').style.display = 'block'; // Mostra o contêiner de imagem
+
+            const container = document.getElementById('imagemContainer');
+            // Replaced space with underscore for image file name
+            const imgUrl = `${tipo.replace(/ /g, '_')}.png?t=${Date.now()}`;
+
+            container.innerHTML = `
+                <div class="status">Carregando ${tipo.replace(/_/g, ' ')}...</div>
+                <img src="${imgUrl}" 
+                     alt="${tipo}" 
+                     onload="this.previousElementSibling.remove()"
+                     onerror="handleImageError(this, '${tipo}')"
+                     style="max-width: 100%; display: block; margin: 0 auto;">
+            `;
+        }
+
+        function handleImageError(img, tipo) {
+            img.parentElement.innerHTML = `
+                <div class="erro">
+                    ❌ Falha ao carregar "${tipo}"<br>
+                    <small>Verifique se o arquivo ${tipo}.png existe</small>
+                </div>
+            `;
+        }		
+    </script>
 </body>
 </html>
