@@ -1,14 +1,21 @@
 {
   "version": 2,
-  "builds": [{"src": "/*", "use": "@vercel/static"}],
+  "builds": [{ "src": "index.html", "use": "@vercel/static" }],
   "routes": [
     {
-      "src": "/(.*\\.(csv|png))",
+      "src": "/(.*\\.csv)",
       "headers": {
         "Content-Type": "text/csv; charset=utf-8",
         "Cache-Control": "no-cache"
       }
     },
-    {"src": "/.*", "dest": "/index.html"}
+    {
+      "src": "/(.*\\.png)",
+      "headers": {
+        "Content-Type": "image/png",
+        "Cache-Control": "no-cache"
+      }
+    },
+    { "src": "/.*", "dest": "/index.html" }
   ]
 }
